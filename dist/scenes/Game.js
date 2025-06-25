@@ -42,6 +42,11 @@ export class Game extends Phaser.Scene {
     // Keyboard inputs - cursors
     this.cursors = this.input.keyboard.createCursorKeys();
 
+    // Check if we are on a touch device
+    if (!this.sys.game.device.os.desktop) {
+      this.addMobileControls();
+    }
+
     // Add star group
     this.stars = this.physics.add.group({
       key: 'star',
@@ -86,16 +91,19 @@ export class Game extends Phaser.Scene {
     );
   }
 
-  update(time) {
-    if (this.cursors.left.isDown) {
+  update() {
+    if (this.cursors.left.isDown || this.moveLeft) {
+      // Move left if the keyboard left OR the mobile left button is active
       this.player.moveLeft();
-    } else if (this.cursors.right.isDown) {
+    } else if (this.cursors.right.isDown || this.moveRight) {
+      // Move right if the keyboard right OR the mobile right button is active
       this.player.moveRight();
     } else {
+      // If no movement keys are active, be idle
       this.player.idle();
     }
 
-    if (this.cursors.up.isDown) {
+    if (this.cursors.up.isDown && this.player.body.touching.down) {
       this.player.jump();
     }
   }
@@ -135,5 +143,84 @@ export class Game extends Phaser.Scene {
     -bomb.setBounce(1);
     bomb.setCollideWorldBounds(true);
     bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+  }
+
+  // Mobile controls
+  addMobileControls() {
+    // --- State and Configuration ---
+    this.moveLeft = false;
+    this.moveRight = false;
+
+    // Define constants for easy tweaking of the look and feel
+    const buttonAlpha = 0.7;
+    const buttonScale = 0.8;
+    const buttonY = this.cameras.main.height - 45; // Moved buttons further down
+    const centerX = this.cameras.main.width / 2; // The horizontal center of the screen
+    const buttonSpacing = 80; // The gap between the buttons
+
+    // --- Create Centered D-Pad (Left/Up/Right) ---
+
+    // Left Button
+    const leftButton = this.add
+      .image(centerX - buttonSpacing, buttonY, 'left-arrow')
+      .setInteractive()
+      .setScrollFactor(0)
+      .setAlpha(buttonAlpha)
+      .setScale(buttonScale);
+
+    // Jump Button (Up Arrow) - Placed at the exact center
+    const jumpButton = this.add
+      .image(centerX, buttonY, 'jump-button')
+      .setInteractive()
+      .setScrollFactor(0)
+      .setAlpha(buttonAlpha)
+      .setScale(buttonScale);
+
+    // Right Button
+    const rightButton = this.add
+      .image(centerX + buttonSpacing, buttonY, 'right-arrow')
+      .setInteractive()
+      .setScrollFactor(0)
+      .setAlpha(buttonAlpha)
+      .setScale(buttonScale);
+
+    // --- Set Larger Hit Areas for Forgiving Controls ---
+    const hitAreaSize = leftButton.width * 1.5;
+    const hitArea = new Phaser.Geom.Circle(0, 0, hitAreaSize / 2);
+
+    leftButton.setOrigin(0.5);
+    jumpButton.setOrigin(0.5);
+    rightButton.setOrigin(0.5);
+
+    this.input.setHitArea(leftButton, hitArea);
+    this.input.setHitArea(jumpButton, hitArea);
+    this.input.setHitArea(rightButton, hitArea);
+
+    // --- Pointer Events (No changes to logic needed) ---
+    leftButton.on('pointerdown', () => {
+      this.moveLeft = true;
+    });
+    leftButton.on('pointerup', () => {
+      this.moveLeft = false;
+    });
+    leftButton.on('pointerout', () => {
+      this.moveLeft = false;
+    });
+
+    rightButton.on('pointerdown', () => {
+      this.moveRight = true;
+    });
+    rightButton.on('pointerup', () => {
+      this.moveRight = false;
+    });
+    rightButton.on('pointerout', () => {
+      this.moveRight = false;
+    });
+
+    jumpButton.on('pointerdown', () => {
+      if (this.player.body.touching.down) {
+        this.player.jump();
+      }
+    });
   }
 }

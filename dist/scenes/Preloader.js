@@ -31,6 +31,9 @@ export class Preloader extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 48,
     });
+    this.load.image('left-arrow', 'ui/arrowLeft.png');
+    this.load.image('right-arrow', 'ui/arrowRight.png');
+    this.load.image('jump-button', 'ui/arrowUp.png');
   }
 
   create() {
