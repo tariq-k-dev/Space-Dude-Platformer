@@ -5,82 +5,67 @@ export class Game extends Phaser.Scene {
     super('Game');
   }
 
+  // In Game.js, replace the entire create() method with this.
+
   create() {
-    if (this.sound.locked) {
-      let text = this.add
-        .text(
-          this.cameras.main.width / 2,
-          this.cameras.main.height / 2,
-          'Click to start',
-          { font: '32px Arial', fill: '#ffffff' }
-        )
-        .setOrigin(0.5);
+    // --- 1. Set up the camera and world bounds ---
+    this.cameras.main.setBounds(0, 0, 800, 600);
+    this.physics.world.setBounds(0, 0, 800, 600);
 
-      this.input.once('pointerdown', () => {
-        this.sound.unlock();
-        text.destroy();
-      });
-    }
+    // --- 2. Create the background ---
+    // Create the sky image and set its scroll factor to create a parallax effect.
+    // A value of 0.5 means it will scroll at half the speed of the camera.
+    this.add.image(400, 300, 'sky').setScrollFactor(0.5);
 
-    // Create the game environment
-    this.add.image(400, 300, 'sky');
-
+    // --- 3. Create the game world objects (platforms, stars, etc.) ---
+    // These objects have a default scroll factor of 1, so they move with the camera.
     this.platforms = this.physics.add.staticGroup();
-
     this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-
     this.platforms.create(600, 400, 'ground');
     this.platforms.create(50, 250, 'ground');
-    this.platforms.create(750, 250, 'ground');
+    this.platforms.create(750, 220, 'ground');
 
-    // Add player to the game
-    this.player = new Player(this, 100, 450);
-
-    // Add a colliders for the player and platforms
-    this.physics.add.collider(this.player, this.platforms);
-
-    // Keyboard inputs - cursors
-    this.cursors = this.input.keyboard.createCursorKeys();
-
-    // Check if we are on a touch device
-    if (!this.sys.game.device.os.desktop) {
-      this.addMobileControls();
-    }
-
-    // Add star group
     this.stars = this.physics.add.group({
       key: 'star',
       repeat: 11,
       setXY: { x: 12, y: 0, stepX: 70 },
     });
-
     this.stars.children.iterate((child) => {
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     });
-
-    // Add colliders for the stars and platforms
     this.physics.add.collider(this.stars, this.platforms);
 
-    // Check for player star overlap
+    // --- 4. Create the player and make the camera follow it ---
+    this.player = new Player(this, 100, 450);
+    this.player.setCollideWorldBounds(true);
+    this.cameras.main.startFollow(this.player, true);
+
+    // --- 5. Create UI elements (score, controls) and lock them to the camera ---
+    // These have a scroll factor of 0.
+    this.score = 0;
+    this.scoreText = this.add
+      .text(32, 32, 'Score: 0', {
+        fontSize: '32px',
+        fontStyle: 'bold',
+        fill: '#192a56',
+      })
+      .setScrollFactor(0);
+
+    if (!this.sys.game.device.os.desktop) {
+      this.addMobileControls();
+    }
+
+    // --- 6. Set up remaining physics and inputs ---
+    this.physics.add.collider(this.player, this.platforms);
     this.physics.add.overlap(
       this.player,
       this.stars,
-      this.collecStar,
+      this.collectStar,
       null,
       this
     );
 
-    // Setting the initial score text
-    this.score = 0;
-    this.scoreText = this.add.text(16, 16, 'Score: 0', {
-      fontSize: '32px',
-      fontStyle: 'bold',
-      fill: '#192a56',
-    });
-
-    // Create bomb group
     this.bombs = this.physics.add.group();
-
     this.physics.add.collider(this.bombs, this.platforms);
     this.physics.add.collider(
       this.player,
@@ -89,6 +74,8 @@ export class Game extends Phaser.Scene {
       null,
       this
     );
+
+    this.cursors = this.input.keyboard.createCursorKeys();
   }
 
   update() {
@@ -108,7 +95,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  collecStar(player, star) {
+  collectStar(player, star) {
     star.disableBody(true, true);
 
     this.score += 10;
@@ -152,15 +139,15 @@ export class Game extends Phaser.Scene {
     this.moveRight = false;
 
     // Define constants for easy tweaking of the look and feel
-    const buttonAlpha = 0.7;
+    const buttonAlpha = 0.8;
     const buttonScale = 0.8;
-    const buttonY = this.cameras.main.height - 45; // Moved buttons further down
+    const safeAreaMargin = 40;
+    const buttonY = this.cameras.main.height - safeAreaMargin; // Position relative to safe area
     const centerX = this.cameras.main.width / 2; // The horizontal center of the screen
-    const buttonSpacing = 80; // The gap between the buttons
+    const buttonSpacing = 120; // The gap between the buttons
 
     // --- Create Centered D-Pad (Left/Up/Right) ---
 
-    // Left Button
     const leftButton = this.add
       .image(centerX - buttonSpacing, buttonY, 'left-arrow')
       .setInteractive()
@@ -168,7 +155,6 @@ export class Game extends Phaser.Scene {
       .setAlpha(buttonAlpha)
       .setScale(buttonScale);
 
-    // Jump Button (Up Arrow) - Placed at the exact center
     const jumpButton = this.add
       .image(centerX, buttonY, 'jump-button')
       .setInteractive()
@@ -176,7 +162,6 @@ export class Game extends Phaser.Scene {
       .setAlpha(buttonAlpha)
       .setScale(buttonScale);
 
-    // Right Button
     const rightButton = this.add
       .image(centerX + buttonSpacing, buttonY, 'right-arrow')
       .setInteractive()
