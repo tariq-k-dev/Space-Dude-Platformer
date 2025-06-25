@@ -140,7 +140,7 @@ export class Game extends Phaser.Scene {
 
     // Define constants for easy tweaking of the look and feel
     const buttonAlpha = 0.8;
-    const buttonScale = 0.8;
+    const buttonScale = 1;
     const safeAreaMargin = 40;
     const buttonY = this.cameras.main.height - safeAreaMargin; // Position relative to safe area
     const centerX = this.cameras.main.width / 2; // The horizontal center of the screen

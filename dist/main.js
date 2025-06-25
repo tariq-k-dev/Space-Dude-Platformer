@@ -19,7 +19,7 @@ const config = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    // orientation: 'landscape',
+    orientation: 'landscape',
   },
   scene: [Boot, Preloader, Game, GameOver],
   audio: {
