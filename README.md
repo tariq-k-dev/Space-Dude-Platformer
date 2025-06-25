@@ -3,6 +3,10 @@
 A simple platformer game built with [Phaser 3](https://phaser.io/).  
 Guide your space dude, collect points, and avoid the baddies!
 
+## Play Online
+
+**[Play the game live on GitHub Pages!](https://tariq-k-dev.github.io/Space-Dude-Platformer/)**
+
 ## Features
 
 - Classic platformer gameplay
@@ -69,4 +73,4 @@ You can deploy this game as a static site, for example using **GitHub Pages**:
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for
+MIT License. See [LICENSE](LICENSE) for details.
