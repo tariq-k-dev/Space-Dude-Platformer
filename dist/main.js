@@ -8,7 +8,7 @@ const config = {
   width: 800,
   height: 600,
   parent: 'game-container',
-  backgroundColor: 'transparent',
+  backgroundColor: '#028af8',
   physics: {
     default: 'arcade',
     arcade: {
@@ -19,7 +19,8 @@ const config = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    orientation: 'landscape',
+    width: 800,
+    height: 600,
   },
   scene: [Boot, Preloader, Game, GameOver],
   audio: {

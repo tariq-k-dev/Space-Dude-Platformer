@@ -3,19 +3,33 @@ import { Player } from '../gameObjects/Player.js';
 export class Game extends Phaser.Scene {
   constructor() {
     super('Game');
+    this.mobileControls = null;
   }
 
   // In Game.js, replace the entire create() method with this.
 
   create() {
     // --- 1. Set up the camera and world bounds ---
-    this.cameras.main.setBounds(0, 0, 800, 600);
-    this.physics.world.setBounds(0, 0, 800, 600);
+    // this.cameras.main.setBounds(0, 0, 800, 600);
+    // this.physics.world.setBounds(0, 0, 800, 600);
+    let worldWidth = this.scale.width;
+    let worldHeight = this.scale.height;
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
 
     // --- 2. Create the background ---
-    // Create the sky image and set its scroll factor to create a parallax effect.
-    // A value of 0.5 means it will scroll at half the speed of the camera.
-    this.add.image(400, 300, 'sky').setScrollFactor(0.5);
+    this.bg = this.add
+      .image(0, 0, 'sky')
+      .setOrigin(0)
+      .setScrollFactor(0)
+      .setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+
+    // Resize handler to adjust background size
+    this.scale.on('resize', (gameSize) => {
+      const width = gameSize.width;
+      const height = gameSize.height;
+      this.bg.setDisplaySize(width, height);
+    });
 
     // --- 3. Create the game world objects (platforms, stars, etc.) ---
     // These objects have a default scroll factor of 1, so they move with the camera.
@@ -51,9 +65,34 @@ export class Game extends Phaser.Scene {
       })
       .setScrollFactor(0);
 
-    if (!this.sys.game.device.os.desktop) {
-      this.addMobileControls();
-    }
+    // Initial check
+    this.updateMobileControls();
+
+    // Listen for resize and update controls
+    this.scale.on('resize', () => {
+      this.updateMobileControls();
+    });
+
+    // Listen for resize and update controls
+    this.scale.on('resize', () => {
+      this.updateMobileControls();
+    });
+
+    // --- Optional: Add fullscreen button ---
+    const fullscreenButton = this.add
+      .image(this.cameras.main.width - 32, 32, 'fullscreen-icon')
+      .setInteractive()
+      .setScrollFactor(0)
+      .setOrigin(1, 0)
+      .setScale(0.5);
+
+    fullscreenButton.on('pointerup', () => {
+      if (!this.scale.isFullscreen) {
+        this.scale.startFullscreen();
+      } else {
+        this.scale.stopFullscreen();
+      }
+    });
 
     // --- 6. Set up remaining physics and inputs ---
     this.physics.add.collider(this.player, this.platforms);
@@ -134,52 +173,62 @@ export class Game extends Phaser.Scene {
 
   // Mobile controls
   addMobileControls() {
+    const group = this.add.container();
+
     // --- State and Configuration ---
     this.moveLeft = false;
     this.moveRight = false;
 
-    // Define constants for easy tweaking of the look and feel
-    const buttonAlpha = 0.8;
+    // Define constants for easy tweaking
+    const buttonAlpha = 0.7;
     const buttonScale = 1;
-    const safeAreaMargin = 40;
-    const buttonY = this.cameras.main.height - safeAreaMargin; // Position relative to safe area
-    const centerX = this.cameras.main.width / 2; // The horizontal center of the screen
-    const buttonSpacing = 120; // The gap between the buttons
+    const safeAreaMargin = 50;
+    // --- Define Button Positions ---
+    const buttonY = this.cameras.main.height - safeAreaMargin;
+    const leftButtonX = 100;
+    const rightButtonX = 220;
+    const jumpButtonX = this.cameras.main.width - 100;
 
-    // --- Create Centered D-Pad (Left/Up/Right) ---
-
+    // --- Create Movement D-Pad on the Left ---
     const leftButton = this.add
-      .image(centerX - buttonSpacing, buttonY, 'left-arrow')
+      .image(leftButtonX, buttonY, 'left-arrow')
       .setInteractive()
       .setScrollFactor(0)
       .setAlpha(buttonAlpha)
       .setScale(buttonScale);
 
-    const jumpButton = this.add
-      .image(centerX, buttonY, 'jump-button')
-      .setInteractive()
-      .setScrollFactor(0)
-      .setAlpha(buttonAlpha)
-      .setScale(buttonScale);
+    group.add(leftButton);
 
     const rightButton = this.add
-      .image(centerX + buttonSpacing, buttonY, 'right-arrow')
+      .image(rightButtonX, buttonY, 'right-arrow')
       .setInteractive()
       .setScrollFactor(0)
       .setAlpha(buttonAlpha)
       .setScale(buttonScale);
+
+    group.add(rightButton);
+
+    // --- Create Jump Button on the Right ---
+    const jumpButton = this.add
+      .image(jumpButtonX, buttonY, 'jump-button')
+      .setInteractive()
+      .setScrollFactor(0)
+      .setAlpha(buttonAlpha)
+      .setScale(buttonScale);
+
+    group.add(jumpButton);
 
     // --- Set Larger Hit Areas for Forgiving Controls ---
     const hitAreaSize = leftButton.width * 1.5;
     const hitArea = new Phaser.Geom.Circle(0, 0, hitAreaSize / 2);
 
     leftButton.setOrigin(0.5);
-    jumpButton.setOrigin(0.5);
     rightButton.setOrigin(0.5);
+    jumpButton.setOrigin(0.5);
 
     this.input.setHitArea(leftButton, hitArea);
-    this.input.setHitArea(jumpButton, hitArea);
     this.input.setHitArea(rightButton, hitArea);
+    this.input.setHitArea(jumpButton, hitArea);
 
     // --- Pointer Events (No changes to logic needed) ---
     leftButton.on('pointerdown', () => {
@@ -207,5 +256,18 @@ export class Game extends Phaser.Scene {
         this.player.jump();
       }
     });
+
+    return group;
+  }
+
+  updateMobileControls() {
+    const isMobile = window.innerWidth < 800 || window.innerHeight < 600;
+
+    if (isMobile && !this.mobileControls) {
+      this.mobileControls = this.addMobileControls();
+    } else if (!isMobile && this.mobileControls) {
+      this.mobileControls.destroy(true);
+      this.mobileControls = null;
+    }
   }
 }

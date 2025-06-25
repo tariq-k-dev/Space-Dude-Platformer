@@ -34,6 +34,7 @@ export class Preloader extends Phaser.Scene {
     this.load.image('left-arrow', 'ui/arrowLeft.png');
     this.load.image('right-arrow', 'ui/arrowRight.png');
     this.load.image('jump-button', 'ui/arrowUp.png');
+    this.load.image('fullscreen-icon', 'ui/fullscreen.png');
   }
 
   create() {
